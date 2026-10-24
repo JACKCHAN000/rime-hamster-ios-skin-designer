@@ -1,6 +1,6 @@
 # 元書造型所 Hamster Skin Studio
 
-作者：[JACKCHAN000](https://github.com/JACKCHAN000) · [線上使用](https://JACKCHAN000.github.io/-rime-hamster-ios-skin-designer/) · [原始碼](https://github.com/JACKCHAN000/-rime-hamster-ios-skin-designer)
+作者：[JACKCHAN000](https://github.com/JACKCHAN000) · [線上使用](https://JACKCHAN000.github.io/rime-hamster-ios-skin-designer/) · [原始碼](https://github.com/JACKCHAN000/rime-hamster-ios-skin-designer)
 
 元書輸入法的網頁皮膚編輯器，介面使用繁體中文，適用不同中文 RIME 輸入方案。中文預設顯示倉頡字根，可改為大寫或小寫字母，搭配仿 iOS 佈局與半透明玻璃質感。
 
@@ -119,11 +119,11 @@ README 圖片來源保存在 `docs/images/*.svg`。更新圖片可執行 `npm.cm
 
 ## GitHub Pages 部署
 
-網站：[元書造型所](https://JACKCHAN000.github.io/-rime-hamster-ios-skin-designer/)
+網站：[元書造型所](https://JACKCHAN000.github.io/rime-hamster-ios-skin-designer/)
 
-推送至 `main` 後，[GitHub Actions](https://github.com/JACKCHAN000/-rime-hamster-ios-skin-designer/actions/workflows/deploy-pages.yml) 會依序安裝鎖定的依賴、執行測試、建置並發佈 `dist/`。部署來源使用 GitHub Actions，設定檔為 `.github/workflows/deploy-pages.yml`。
+推送至 `main` 後，[GitHub Actions](https://github.com/JACKCHAN000/rime-hamster-ios-skin-designer/actions/workflows/deploy-pages.yml) 會依序安裝鎖定的依賴、執行測試、建置並發佈 `dist/`。部署來源使用 GitHub Actions，設定檔為 `.github/workflows/deploy-pages.yml`。
 
-Vite 的正式建置使用 `/-rime-hamster-ios-skin-designer/` 路徑，本機開發維持 `/`。若改名或搬移儲存庫，請一併更新 `src/site-info.js` 與 `index.html` 的網址。網頁仍在瀏覽器本機處理資料，GitHub Pages 只提供靜態檔案。
+Vite 的正式建置使用 `/rime-hamster-ios-skin-designer/` 路徑，本機開發維持 `/`。若改名或搬移儲存庫，請一併更新 `src/site-info.js` 與 `index.html` 的網址。網頁仍在瀏覽器本機處理資料，GitHub Pages 只提供靜態檔案。
 
 ## 官方文件
 
