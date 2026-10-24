@@ -1,0 +1,15 @@
+node_modules/
+dist/
+artifacts/
+*.log
+.cache/
+
+# Local reference inputs and development notes are not part of the published project.
+*.cskin
+/screenshot/
+/docs/design/
+/docs/reference/
+/docs/implementation-status.md
+.env
+.env.*
+!.env.example
