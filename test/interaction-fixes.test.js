@@ -16,7 +16,7 @@ const png=Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1H
 test('移除預設和舊草稿工具列中英，但保留底列切換和其他自訂',()=>{
   const p=createProject();assert.ok(!p.toolbar.includes('language'));assert.equal(p.toolbar.length,7);assert.ok(buildNativeKeyboard(p).key_language);
   const old=createProject();old.editorRevision=5;old.toolbar=['menu','language','copy','emoji'];old.keys['zh:q']={label:'甲'};
-  const next=upgradeProject(old);assert.deepEqual(next.toolbar,['menu','copy','emoji']);assert.deepEqual(next.keys,old.keys);assert.equal(next.editorRevision,14);assert.deepEqual(old.toolbar,['menu','language','copy','emoji']);assert.deepEqual(upgradeProject(next),next);
+  const next=upgradeProject(old);assert.deepEqual(next.toolbar,['menu','copy','emoji']);assert.deepEqual(next.keys,old.keys);assert.equal(next.editorRevision,15);assert.deepEqual(old.toolbar,['menu','language','copy','emoji']);assert.deepEqual(upgradeProject(next),next);
 });
 test('中英文字隨鍵盤切換，背景維持普通按鍵',()=>{
   const p=createProject();p.toolbar.push('language');

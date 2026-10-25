@@ -2,6 +2,8 @@ import { defaultSwipes } from './actions.js';
 import {DEFAULT_SCHEMA_BINDING,bindLanguageAction} from './schema-binding.js';
 import {collectionStyles} from './collection-style.js';
 import {DEFAULT_SWIPE_HINTS,chineseLegend} from './presentation-settings.js';
+import {keyboardBoardColor} from './keyboard-material.js';
+import {rawSpaceAction,literalSpaceAction} from './space-behavior.js';
 export const PROJECT_FORMAT = 'hamster-skin-studio';
 export const PROJECT_VERSION = 1;
 export const clone = (value) => structuredClone(value);
@@ -52,11 +54,11 @@ const SYMBOLS = {
 
 export function createProject() {
   return {
-    format: PROJECT_FORMAT, version: PROJECT_VERSION, editorRevision: 14,
+    format: PROJECT_FORMAT, version: PROJECT_VERSION, editorRevision: 15,
     meta: { name: '霧光 · 中文', author: '', description: '為日常打字，留一點光。' },
     layout: 'ios', appearance: 'glass', legend: 'cangjie',
     dimensions: { portrait: { keyboardHeight: 224, toolbarHeight: 42, preeditHeight: 22 }, landscape: { keyboardHeight: 160, toolbarHeight: 36, preeditHeight: 20 } },
-    metrics: { gap: 5, radius: 10, fontSize: 22, keyOpacity: 24, border: 0.5, shadow: 0.16 },
+    metrics: { gap: 5, radius: 10, fontSize: 22, keyOpacity: 24, backgroundOpacity:1, border: 0.5, shadow: 0.16 },
     colors: {
       dark: { background: '#202124', key: '#FFFFFF', text: '#FFFFFF', accent: '#B8DFFF' },
       light: { background: '#D9DFE5', key: '#FFFFFF', text: '#18202A', accent: '#B8DFFF' },
@@ -64,7 +66,7 @@ export function createProject() {
     toolbar: [...DEFAULT_TOOLBAR],
     schemaBinding:{...DEFAULT_SCHEMA_BINDING},
     swipeHints:clone(DEFAULT_SWIPE_HINTS),
-    behavior: { symbolTap: 'ios', symbolHold: 'hamster', animation: true, showPreedit: true, bottomRow: 'enhanced', swipePreset:'reference', hintStyle:'text' },
+    behavior: { symbolTap: 'ios', symbolHold: 'hamster', animation: true, showPreedit: true, bottomRow: 'enhanced', swipePreset:'reference', hintStyle:'text',spaceAction:'candidate' },
     symbolPages: clone(SYMBOLS), collections: clone(SYMBOL_CATEGORIES),
     keys: {}, nativeOverrides: {}, assets: {}, compatibility: { source: null, warnings: [] },
   };
@@ -73,7 +75,7 @@ export function createProject() {
 // Additive migration: keep user colours, actions, native overrides, and toolbar order.
 export function upgradeProject(value) {
   const p = clone(value);
-  if (p?.format !== PROJECT_FORMAT || p.version !== PROJECT_VERSION || (p.editorRevision ?? 1) >= 14) return p;
+  if (p?.format !== PROJECT_FORMAT || p.version !== PROJECT_VERSION || (p.editorRevision ?? 1) >= 15) return p;
   const previousToolbar=Array.isArray(p.toolbar)?[...p.toolbar]:null;
   if ((p.editorRevision ?? 1) < 2) {
     if (p.behavior && p.behavior.bottomRow === undefined) p.behavior.bottomRow = 'enhanced';
@@ -114,10 +116,12 @@ export function upgradeProject(value) {
   if(p.meta?.name==='霧光 · 速成')p.meta.name='霧光 · 中文';
   p.swipeHints ||= clone(DEFAULT_SWIPE_HINTS);
   if((p.editorRevision??1)<13&&p.legend==='uppercase'){p.compatibility ||= {source:null,warnings:[]};p.compatibility.previousLegend ||= p.legend;p.legend='cangjie';}
-  if(p.schemaBinding.zh==='quick_ice'){
+  if((p.editorRevision??1)<14&&p.schemaBinding.zh==='quick_ice'){
     p.compatibility ||= {source:null,warnings:[]};p.compatibility.previousChineseSchemaId ||= p.schemaBinding.zh;p.schemaBinding.zh='quick5_lite';
   }
-  p.editorRevision = 14;
+  p.metrics.backgroundOpacity ??= 1;
+  p.behavior.spaceAction ??= 'candidate';
+  p.editorRevision = 15;
   return p;
 }
 
@@ -236,11 +240,13 @@ export function validateProject(p) {
   }
   for (const theme of ['dark', 'light']) for (const key of ['background', 'key', 'text', 'accent']) if (!validColor(p.colors?.[theme]?.[key])) errors.push(`${theme}.${key} 色碼不正確。`);
   for (const [key, min, max] of [['gap', 0, 14], ['radius', 0, 28], ['fontSize', 12, 36], ['keyOpacity', 8, 100], ['border', 0, 3], ['shadow', 0, 1]]) if (!finite(p.metrics?.[key], min, max)) errors.push(`${key} 超出支援範圍。`);
+  if(p.metrics?.backgroundOpacity!==undefined&&!finite(p.metrics.backgroundOpacity,0,100))errors.push('底色不透明度需為 0–100%。');
   if (!Array.isArray(p.toolbar) || p.toolbar.length > 10 || p.toolbar.some((id) => !TOOL_OPTIONS.some((t) => t[0] === id))) errors.push('工具列設定不正確。');
   if (!object(p.behavior) || !['ios','hamster'].includes(p.behavior.symbolTap) || !['ios','hamster','none'].includes(p.behavior.symbolHold) || typeof p.behavior.animation !== 'boolean' || typeof p.behavior.showPreedit !== 'boolean') errors.push('操作設定不正確。');
   if (p.behavior?.bottomRow !== undefined && !['enhanced','legacy'].includes(p.behavior.bottomRow)) errors.push('底列配置不支援。');
   if (p.behavior?.swipePreset !== undefined && !['reference','full','off'].includes(p.behavior.swipePreset)) errors.push('滑動預設不支援。');
   if (p.behavior?.hintStyle !== undefined && !['text','icons'].includes(p.behavior.hintStyle)) errors.push('提示樣式不支援。');
+  if(p.behavior?.spaceAction!==undefined&&!['candidate','rawThenSpace'].includes(p.behavior.spaceAction))errors.push('空白鍵行為不支援。');
   if(p.schemaBinding!==undefined){
     if(!object(p.schemaBinding)||typeof p.schemaBinding.enabled!=='boolean')errors.push('方案綁定設定不正確。');
     else for(const [locale,label] of [['zh','中文'],['en','英文']]){
@@ -278,12 +284,13 @@ export function alpha(color, opacity) { return color + Math.round(Math.max(0, Ma
 export function resolveAppearance(p, theme) {
   const colors = p.colors[theme];
   const opacity = p.appearance === 'solid' ? 1 : p.appearance === 'frost' ? Math.max(0.68, p.metrics.keyOpacity / 100) : p.metrics.keyOpacity / 100;
-  return { ...colors, opacity, fill: alpha(colors.key, opacity), activeFill: alpha(colors.key, Math.min(1, opacity + 0.18)), radius: p.metrics.radius, gap: p.metrics.gap, fontSize: p.metrics.fontSize, border: p.appearance === 'solid' ? 0 : p.metrics.border, shadow: p.metrics.shadow };
+  return { ...colors, opacity, fill: alpha(colors.key, opacity), activeFill: alpha(colors.key, Math.min(1, opacity + 0.18)), boardFill:keyboardBoardColor(p,theme),radius: p.metrics.radius, gap: p.metrics.gap, fontSize: p.metrics.fontSize, border: p.appearance === 'solid' ? 0 : p.metrics.border, shadow: p.metrics.shadow };
 }
 
 function control(id, label, role, action, width = 1) { return { id, label, role, action, width }; }
 function symbolTarget(kind, locale) { return kind === 'hamster' ? 'symbolic' : `ios_${locale}_symbols_1`; }
 export function keyboardRows(p, { page = 'main', locale = 'zh', shifted = false, capsLocked=false } = {}) {
+  const space=(width)=>({...control('space','␣','space',p.behavior.spaceAction==='rawThenSpace'?literalSpaceAction():'space',width),...(p.behavior.spaceAction==='rawThenSpace'?{preeditStateAction:rawSpaceAction()}:{})});
   const symbolKey = control('symbols', 'symbols', 'function', { keyboardType: symbolTarget(p.behavior.symbolTap, locale) }, 1.05);
   if (p.behavior.symbolHold !== 'none') symbolKey.holdAction = { keyboardType: symbolTarget(p.behavior.symbolHold, locale) };
   const bottom = () => {
@@ -293,11 +300,11 @@ export function keyboardRows(p, { page = 'main', locale = 'zh', shifted = false,
       const numeric = control('numeric',page === 'numeric' ? 'back' : '123','function',page === 'numeric' ? 'returnPrimaryKeyboard' : {keyboardType:locale === 'zh' ? 'numeric' : 'studio_en_numeric'},1.05);
       const period = control('period',locale==='en'?'.':'。','symbol',{symbol:locale==='en'?'.':'。'},0.95);
       period.longPress = {rows:[locale==='en'?[',','.','!','?']:['，','。',',','.','!','?']],selected:{row:0,col:1}};
-      return [start,numeric,control('language',locale==='en'?'EN':'中','function',languageAction(locale,p.schemaBinding),1.15),control('space','␣','space','space',3.65),period,control('enter','return','enter','enter',2.15)];
+      return [start,numeric,control('language',locale==='en'?'EN':'中','function',languageAction(locale,p.schemaBinding),1.15),space(3.65),period,control('enter','return','enter','enter',2.15)];
     }
     const start = page === 'main' ? symbolKey : control('return', 'back', 'function', 'returnPrimaryKeyboard', 1.2);
     const emoji = control('emoji', '☺', 'emoji', { keyboardType: 'emojis' }, 1.1);
-    return [start, emoji, control('space','␣','space','space',5.1), control('enter','return','enter','enter',2.6)];
+    return [start, emoji, space(5.1), control('enter','return','enter','enter',2.6)];
   };
   let rows;
   if (page === 'main') {
@@ -310,7 +317,7 @@ export function keyboardRows(p, { page = 'main', locale = 'zh', shifted = false,
       [operator('plus','+'),operator('minus','−','-'),digit(1),digit(2),digit(3),control('backspace','backspace','function','backspace',7)],
       [operator('multiply','*'),operator('divide','/'),digit(4),digit(5),digit(6),{...symbolKey,width:7}],
       [operator('open_paren','('),operator('close_paren',')'),digit(7),digit(8),digit(9),control('enter','return','enter','enter',7)],
-      [control('numeric','back','function','returnPrimaryKeyboard',5),control('language',locale==='en'?'EN':'中','function',languageAction(locale,p.schemaBinding),5),{...operator('dot','.'),width:9},digit(0),{...operator('equal','='),width:9},control('space','␣','space','space',7)],
+      [control('numeric','back','function','returnPrimaryKeyboard',5),control('language',locale==='en'?'EN':'中','function',languageAction(locale,p.schemaBinding),5),{...operator('dot','.'),width:9},digit(0),{...operator('equal','='),width:9},space(7)],
     ];
   } else {
     const n = page === 'symbols2' ? 1 : 0;

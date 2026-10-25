@@ -1,5 +1,6 @@
 import { actionLabel } from './actions.js';
 import {keyboardSwitchType} from './schema-binding.js';
+import {isRawSpaceAction,isLiteralSpaceAction} from './space-behavior.js';
 
 const SYSTEM_IMAGES = {
   shift:'shift',shiftActive:'shift.fill',capsLock:'capslock.fill',backspace:'delete.left',return:'return',back:'arrow.uturn.backward',
@@ -43,6 +44,8 @@ export function actionStyle(action) {
   return glyphStyle(actionGlyph(action));
 }
 export function accessibleKeyLabel(name, action, fallback, locale = 'zh') {
+  if(name==='key_space'&&isRawSpaceAction(action))return '原碼上屏並加空格';
+  if(name==='key_space'&&isLiteralSpaceAction(action))return '空白鍵';
   if(Array.isArray(action?.combine)&&keyboardSwitchType(action))return '中英切換';
   if(name==='tool_traditional'&&locale==='en'&&(action?.shortcut==='#中英切换'||action?.rimeOption==='ascii_mode'))return fallback==='EN+'?'開啟 ASCII 模式':'關閉 ASCII 模式';
   if (action === 'returnPrimaryKeyboard') return locale === 'en' ? '返回英文鍵盤' : '返回中文鍵盤';

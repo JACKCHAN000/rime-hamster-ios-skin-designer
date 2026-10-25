@@ -1,5 +1,7 @@
 import {spaceSymbolStyle,spaceSymbolColor} from './space-symbol.js';
 import {hiddenSwipeHint} from './actions.js';
+import {keyboardBoardColor} from './keyboard-material.js';
+import {isRawSpaceAction,rawSpaceAction,isLiteralSpaceAction,literalSpaceAction} from './space-behavior.js';
 
 // RIME cangjie5.schema.yaml's A–Z display mapping (Z is the symbol key).
 export const CANGJIE_ROOTS=Object.freeze(Object.fromEntries([...'abcdefghijklmnopqrstuvwxyz'].map((key,i)=>[key,[...'日月金木水火土竹戈十大中一弓人心手口尸廿山女田難卜符'][i]])));
@@ -9,6 +11,12 @@ export const chineseLegend=(key,mode)=>mode==='cangjie'?CANGJIE_ROOTS[key]:mode=
 
 // Apply shared controls to recognisable generated layers, including old native overrides.
 export function applyKeyPresentation(root,p,{theme='dark',locale='zh'}={}){
+  const board=root.boardBackground;
+  if(board?.buttonStyleType==='geometry'&&typeof board.normalColor==='string'&&board.normalColor.slice(0,7).toUpperCase()===p.colors[theme].background.toUpperCase())board.normalColor=keyboardBoardColor(p,theme);
+  for(const [name,cell] of Object.entries(root))if((name==='key_space'||/^key_space_choice_\d+_\d+$/.test(name))&&(cell?.action==='space'||isLiteralSpaceAction(cell?.action))){
+    if(p.behavior.spaceAction==='rawThenSpace'&&(cell.preeditStateAction===undefined||isRawSpaceAction(cell.preeditStateAction))){cell.action=literalSpaceAction();cell.preeditStateAction=rawSpaceAction();}
+    else if(p.behavior.spaceAction!=='rawThenSpace'&&isRawSpaceAction(cell.preeditStateAction)){cell.action='space';delete cell.preeditStateAction;}
+  }
   const hints=p.swipeHints||DEFAULT_SWIPE_HINTS;
   let migratedPeriod=false;
   for(const [name,style] of Object.entries(root)){

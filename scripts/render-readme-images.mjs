@@ -7,6 +7,8 @@ import {selectedStyles} from '../src/preview.js';
 import {icon,systemIcon,esc} from '../src/icons.js';
 import {spaceSymbolColor,spaceSymbolResource} from '../src/space-symbol.js';
 import {legendLabel} from '../src/presentation-settings.js';
+import {SYSTEM_SURFACE} from '../src/keyboard-material.js';
+import {SPACE_ACTIONS} from '../src/space-behavior.js';
 
 // Documentation illustrations from the current model; these are not browser/device captures.
 const project=createProject(),out=fileURLToPath(new URL('../docs/images/',import.meta.url));
@@ -37,7 +39,7 @@ function layer(style,x,y,w,h,{web=false,menu=false}={}){
 function keyboard({locale='zh',page='main',web=false}={}){
   const view={theme:'dark',orientation:'portrait',locale,page,simplified:false,asciiMode:false},root=buildNativeKeyboard(project,view),width=390;
   const preedit=root.preeditHeight,toolbar=root.toolbarHeight,height=preedit+toolbar+root.keyboardHeight;
-  let result=rect(0,0,width,height,root.boardBackground.normalColor,18);
+  let result=rect(0,0,width,height,SYSTEM_SURFACE[view.theme],18)+rect(0,0,width,height,root.boardBackground.normalColor,18);
   result+=text(`${locale==='zh'?'中文':'英文'} · ${locale==='zh'?legendLabel(project.legend):'小寫字母'}`,width/2,preedit/2,10,'#969FA5',400,'middle');
   const tools=root.toolbarLayout[0].HStack.subviews;
   tools.forEach(({Cell:name},i)=>{const cell=root[name];for(const ref of selectedStyles(cell.foregroundStyle,view))result+=layer(root[ref],i*width/tools.length,preedit,width/tools.length,toolbar,{web,menu:name==='tool_menu'});});
@@ -65,8 +67,9 @@ web+=rect(115,217,286,87,'#f3f7ef',10,'#b9cdb1')+graphic('layout',147,258,27,'#7
 web+=text('輸入方案綁定',115,342,12,'#69795f',600)+text('中英切換時一併切換方案',115,377,12,'#53654c',500)+rect(365,366,36,20,'#78946c',10)+rect(383,369,14,14,'#ffffff',7);
 web+=text('中文方案 ID',115,418,11,'#6e7b67')+rect(115,435,286,38,'#ffffff',6,'#dfe5d9')+text(project.schemaBinding.zh,128,454,13,'#53654c');
 web+=text('英文方案 ID',115,500,11,'#6e7b67')+rect(115,517,286,38,'#ffffff',6,'#dfe5d9')+text(project.schemaBinding.en,128,536,13,'#53654c');
-web+=button('套用方案綁定',115,578,286)+text('中文鍵盤字面',115,653,11,'#6e7b67')+rect(115,671,286,38,'#ffffff',6,'#dfe5d9')+text('倉頡字根（預設）',128,690,12,'#53654c')+graphic('down',382,690,14,'#87967d');
-web+=text('上下滑提示大小',115,751,11,'#6e7b67')+text(`${project.swipeHints.scale}%`,401,751,11,'#6e7b67',400,'end')+rect(115,779,286,4,'#e4eadf',2)+rect(115,779,143,4,'#8da77e',2)+rect(252,773,16,16,'#6e8d5d',8);
+web+=button('套用方案綁定',115,578,286)+text('空白鍵點按行為',115,653,11,'#6e7b67')+rect(115,671,286,38,'#ffffff',6,'#dfe5d9')+text(SPACE_ACTIONS.find(([id])=>id===project.behavior.spaceAction)[1],128,690,12,'#53654c')+graphic('down',382,690,14,'#87967d');
+web+=text('中文鍵盤字面',115,751,11,'#6e7b67')+rect(115,769,286,38,'#ffffff',6,'#dfe5d9')+text('倉頡字根（預設）',128,788,12,'#53654c')+graphic('down',382,788,14,'#87967d');
+web+=text('上下滑提示大小',115,850,11,'#6e7b67')+text(`${project.swipeHints.scale}%`,401,850,11,'#6e7b67',400,'end')+rect(115,878,286,4,'#e4eadf',2)+rect(115,878,143,4,'#8da77e',2)+rect(252,872,16,16,'#6e8d5d',8);
 web+=text('YOUR KEYBOARD, YOUR WAY',493,124,11,'#99a68c',500)+text('讓每一次輸入，都剛剛好。',493,165,28,'#354632',550)+text('從一點透明、一個鍵位，做出自己的日常。',493,206,12,'#7f8d76');
 web+=text('由 JACKCHAN000 製作 · GitHub 原始碼',493,229,11,'#526c48');
 web+=button('深色',493,247,86,{active:true})+graphic('moon',507,265,13,'#53664f')+button('淺色',579,247,86)+graphic('sun',593,265,13,'#53664f')+button('iPhone · 直向',1185,247,180);

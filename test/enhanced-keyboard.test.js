@@ -89,12 +89,12 @@ test('獨立數字鍵盤及英文數字頁皆有完整映射、數字與返回�
 test('舊專案與模板升級不重設使用者配色、送鍵及原生覆寫',()=>{
   const old=createProject();delete old.editorRevision;delete old.behavior.bottomRow;
   old.toolbar=['symbols','language','dismiss'];old.colors.dark.background='#123456';old.keys['zh:q']={swipeUpAction:{shortcut:'#copy'}};old.nativeOverrides['dark/pinyin_portrait.yaml']={future:{preserve:true}};
-  const next=upgradeProject(old);assert.equal(next.editorRevision,14);assert.equal(next.behavior.bottomRow,'enhanced');
+  const next=upgradeProject(old);assert.equal(next.editorRevision,15);assert.equal(next.behavior.bottomRow,'enhanced');
   assert.deepEqual(next.toolbar,DEFAULT_TOOLBAR);assert.deepEqual(next.compatibility.previousToolbar,old.toolbar);assert.equal(next.colors.dark.background,'#123456');assert.deepEqual(next.keys,old.keys);assert.deepEqual(next.nativeOverrides,old.nativeOverrides);
   assert.equal(old.editorRevision,undefined);assert.deepEqual(next,upgradeProject(next));
   next.toolbar=next.toolbar.filter((id)=>id!=='menu');assert.ok(!upgradeProject(next).toolbar.includes('menu'));
   assert.deepEqual(importBytes(strToU8(JSON.stringify(old)),'old.project.json').project.toolbar,DEFAULT_TOOLBAR);
   const store=new Map([['hamster-skin-studio:project:v1',JSON.stringify(old)],['hamster-skin-studio:library:v1',JSON.stringify([{id:'old',project:old}])]]);
   globalThis.localStorage={getItem:(key)=>store.get(key)??null};
-  try {assert.equal(loadDraft().editorRevision,14);assert.equal(listTemplates()[0].project.editorRevision,14);}finally{delete globalThis.localStorage;}
+  try {assert.equal(loadDraft().editorRevision,15);assert.equal(listTemplates()[0].project.editorRevision,15);}finally{delete globalThis.localStorage;}
 });

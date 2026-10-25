@@ -13,6 +13,7 @@ import { nextShiftState,afterCharacterState,caseState,letterCaseMode } from './k
 import { toggleAsciiMode } from './rime-state.js';
 import { actionFromFields } from './actions.js';
 import {legendLabel} from './presentation-settings.js';
+import {isRawSpaceAction,rawSpacePreviewText} from './space-behavior.js';
 
 const app = document.getElementById('app');
 let project = loadDraft() || createProject();
@@ -92,6 +93,10 @@ function perform(action,{forceInput=false}={}) {
     if (action.character !== undefined || action.symbol !== undefined) {
       const text=action.character??action.symbol,inserted=insertText(text,forceInput);
       if(inserted&&view.locale==='en'&&/^[a-z]$/i.test(text)){Object.assign(view,afterCharacterState(view));renderPreview();if(tab==='keys')renderPanel();}return;
+    }
+    if(isRawSpaceAction(action)&&view.preedit){
+      const inserted=insertText(rawSpacePreviewText(view.preedit),forceInput);
+      if(inserted&&view.preedit)changeView({preedit:false,candidates:'none'});return;
     }
     if (action.combine) { for (const child of action.combine) if (!child.delay) perform(child,{forceInput}); return; }
     if(action.switchRimeSchema){toast(`方案切換目標：${action.switchRimeSchema}（實際由元書執行）`);return;}

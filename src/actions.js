@@ -1,4 +1,5 @@
 import {keyboardSwitchType} from './schema-binding.js';
+import {isRawSpaceAction} from './space-behavior.js';
 export const SHORTCUT_PRESETS = [
   ['#keyboardMenu','鍵盤菜單'],
   ['#copy','複製'],['#cut','剪下'],['#paste','貼上'],
@@ -47,6 +48,7 @@ export function defaultSwipes(key, locale = 'zh', preset = 'reference') {
 }
 export function actionLabel(action) {
   if (!action || action === 'none') return '';
+  if(isRawSpaceAction(action))return '原碼上屏＋空格';
   if(Array.isArray(action.combine)&&keyboardSwitchType(action))return keyboardSwitchType(action)==='alphabetic'?'英文＋方案':'中文＋方案';
   if (typeof action === 'string') return ({space:'空白',enter:'換行',tab:'Tab',shift:'Shift',backspace:'刪除',returnPrimaryKeyboard:'返回',dismissKeyboard:'收起'})[action] || action;
   const command = action.shortcut || action.shortcutCommand;

@@ -6,6 +6,7 @@ import { asciiModeValue } from './rime-state.js';
 import {applySchemaBindings} from './schema-binding.js';
 import {applyKeyPresentation,legendLabel} from './presentation-settings.js';
 import {spaceSymbolColor,spaceSymbolHtml,drawSpaceSymbol} from './space-symbol.js';
+import {SYSTEM_SURFACE} from './keyboard-material.js';
 
 export const cssColor = (value, fallback = 'transparent') => typeof value === 'string' && /^#?[a-f0-9]{6}([a-f0-9]{2})?$/i.test(value) ? `#${value.replace(/^#/,'')}` : fallback;
 const number = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -144,7 +145,8 @@ export function renderKeyboard(p, view) {
   const keys = view.candidates === 'expanded' ? '' : `<div class="native-keys" style="height:${number(root.keyboardHeight,224)}px;padding:${insetsCss(root.keyboardStyle?.insets)}">${nodesHtml(root.keyboardLayout || [])}</div>`;
   const legendDescription=view.locale==='en'?(view.capsLocked?'大寫鎖定字母':view.shifted?'大寫字母':'小寫字母'):legendLabel(p.legend);
   const preedit = preeditHeight ? `<div class="native-preedit" style="height:${preeditHeight}px;color:${cssColor(root.preeditText?.textColor,'#969FA5')}">${view.preedit ? 'ab' : `<span class="preedit-placeholder">${view.locale==='zh'?'中文':'英文'} · ${legendDescription}</span>`}</div>` : '';
-  return { root,cells, html:`<div class="native-board ${p.behavior.animation ? 'animated' : ''}" style="background:${esc(fill(board.normalColor))};color:${cssColor(p.colors[view.theme].text)}">${preedit}${toolbar}${keys}</div>`, name: view.nativePath && p.nativeOverrides[view.nativePath] ? view.nativePath : `${view.theme}/${descriptorName(view)}.yaml` };
+  const tint=fill(board.normalColor),surface=SYSTEM_SURFACE[view.theme],background=Array.isArray(board.normalColor)?`${tint},${surface}`:`linear-gradient(${tint},${tint}),${surface}`;
+  return { root,cells, html:`<div class="native-board ${p.behavior.animation ? 'animated' : ''}" style="background:${esc(background)};color:${cssColor(p.colors[view.theme].text)}">${preedit}${toolbar}${keys}</div>`, name: view.nativePath && p.nativeOverrides[view.nativePath] ? view.nativePath : `${view.theme}/${descriptorName(view)}.yaml` };
 }
 
 export function createDemoPng(p, theme = 'dark') {
@@ -152,7 +154,7 @@ export function createDemoPng(p, theme = 'dark') {
   const scale = 2, width = 390, height = Number(root.preeditHeight)+Number(root.toolbarHeight)+Number(root.keyboardHeight);
   const canvas = document.createElement('canvas'); canvas.width = width*scale; canvas.height = height*scale;
   const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('瀏覽器無法產生預覽圖。');
-  ctx.scale(scale,scale); ctx.fillStyle = cssColor(root.boardBackground.normalColor); ctx.fillRect(0,0,width,height);
+  ctx.scale(scale,scale);ctx.fillStyle=SYSTEM_SURFACE[theme];ctx.fillRect(0,0,width,height);ctx.fillStyle = cssColor(root.boardBackground.normalColor); ctx.fillRect(0,0,width,height);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = p.colors[theme].text; ctx.font = '12px sans-serif'; ctx.fillText(`中文 · ${legendLabel(p.legend)}`,width/2,Number(root.preeditHeight)/2);
   const tools = p.toolbar, toolbarY = Number(root.preeditHeight);

@@ -7,6 +7,7 @@ import {applySchemaBindings,keyboardSwitchType} from './schema-binding.js';
 import {collectionStyles} from './collection-style.js';
 import {applyKeyPresentation,legendLabel} from './presentation-settings.js';
 import {spaceSymbolColor,spaceSymbolResource} from './space-symbol.js';
+import {isLiteralSpaceAction} from './space-behavior.js';
 function mixColor(color,background,amount){return '#'+[1,3,5].map((at)=>Math.round(parseInt(color.slice(at,at+2),16)*amount+parseInt(background.slice(at,at+2),16)*(1-amount)).toString(16).padStart(2,'0')).join('');}
 function nativeAppearance(p,theme){const a=resolveAppearance(p,theme);return {...a,accentInk:theme==='light'?mixColor(a.accent,'#000000',0.42):a.accent};}
 function contrastInk(color){const [r,g,b]=[1,3,5].map((at)=>parseInt(color.slice(at,at+2),16));return r*0.299+g*0.587+b*0.114>155?'#142B3D':'#FFFFFF';}
@@ -78,7 +79,7 @@ function baseRoot(p, theme, orientation,locale) {
     preeditText: { fontSize: 13, textColor: a.text, fontWeight: 'regular' },
     toolbarStyle: { insets: { left: 7, right: 7 }, backgroundStyle: 'boardBackground' },
     keyboardStyle: { insets: { left: 4, right: 4, top: 2, bottom: 3 }, backgroundStyle: 'boardBackground' },
-    boardBackground: { buttonStyleType: 'geometry', normalColor: a.background },
+    boardBackground: { buttonStyleType: 'geometry', normalColor: a.boardFill },
     keyBackground: { buttonStyleType: 'geometry', insets: { left: a.gap / 2, right: a.gap / 2, top: a.gap / 2, bottom: a.gap / 2 }, normalColor: a.fill, highlightColor: a.activeFill, cornerRadius: a.radius, borderSize: a.border, normalBorderColor: alpha(a.text, 0.12), highlightBorderColor: alpha(a.text, 0.28), normalShadowColor: '#000000', shadowOpacity: a.shadow, shadowRadius: 2, shadowOffset: { x: 0, y: 1 } },
     hintBackground: { buttonStyleType: 'geometry', normalColor: theme === 'dark' ? '#4A4D52' : '#FFFFFF', cornerRadius: 11 },
     hintSelected: { buttonStyleType: 'geometry', normalColor: selectionColor, highlightColor:selectionColor, cornerRadius: 8, borderSize:1, normalBorderColor:a.accentInk, highlightBorderColor:a.accentInk },
@@ -145,6 +146,7 @@ export function buildNativeKeyboard(p, { theme = 'dark', orientation = 'portrait
           cell.foregroundStyle = foreground(root, `${name}_fg`, key.role === 'emoji' ? 'smile' : label, a, size, customLabel !== undefined ? {buttonStyleType:'text',text:label} : glyphStyle(key.role === 'emoji' ? 'smile' : label));
           if(key.role==='emoji')root[`${name}_fg`].fontWeight='medium';
           cell.action = clone(key.action);
+          if((cell.action==='space'||isLiteralSpaceAction(cell.action))&&key.preeditStateAction)cell.preeditStateAction=clone(key.preeditStateAction);
           if (key.id === 'backspace') cell.repeatAction = 'backspace';
           if (key.swipeUpAction) cell.swipeUpAction = clone(key.swipeUpAction);
           if (key.swipeDownAction) cell.swipeDownAction = clone(key.swipeDownAction);
